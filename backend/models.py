@@ -1,0 +1,35 @@
+from django.db import models
+
+class Developer(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    website = models.URLField(blank=True, null=True)
+    logo = models.ImageField(upload_to="developers/logos/", blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Project(models.Model):
+    name = models.CharField(max_length=255)
+    developer = models.ForeignKey(Developer, on_delete=models.CASCADE, related_name="projects")
+    city = models.CharField(max_length=100)
+    address = models.TextField()
+    completion_date = models.DateField()
+    price_per_m2 = models.DecimalField(max_digits=10, decimal_places=2)
+    images = models.ImageField(upload_to="projects/images/", blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Apartment(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="apartments")
+    floor = models.IntegerField()
+    rooms = models.IntegerField()
+    size_m2 = models.DecimalField(max_digits=6, decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.rooms}-комнатная ({self.size_m2} м²) в {self.project.name}"
