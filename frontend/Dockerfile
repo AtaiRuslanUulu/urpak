@@ -1,21 +1,20 @@
-# Use Node.js as base image
+# Use Node.js base image
 FROM node:20
 
-# Set working directory to frontend
-WORKDIR /app/frontend
+# Set working directory
+WORKDIR /app
 
-# Copy package.json and install dependencies
-COPY frontend/package.json frontend/package-lock.json ./
-RUN npm install --frozen-lockfile
+# Copy only package.json and package-lock.json first
+COPY package.json package-lock.json ./
+
+# Install dependencies
+RUN npm install
 
 # Copy all frontend files
-COPY frontend .
+COPY . .  # Instead of `COPY frontend .`
 
 # Build Next.js app
 RUN npm run build
-
-# Expose the port Next.js runs on
-EXPOSE 3000
 
 # Start Next.js
 CMD ["npm", "start"]
