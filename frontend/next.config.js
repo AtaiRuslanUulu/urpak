@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
+/** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone", // Required for correct Docker deployment
   images: {
-    domains: ["127.0.0.1", "localhost", "urpak.kg"], // Add production domain
+    domains: ["urpak.kg"], // Add your domain here!
   },
-  output: "standalone", // ✅ Needed for standalone Next.js deployment
-  reactStrictMode: true,
 };
 
 module.exports = nextConfig;
