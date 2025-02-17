@@ -2,11 +2,11 @@
 PYTHON_VERSION = "3.11"
 
 [providers]
-nodejs = "latest"
+providers = ["nodejs"]
 
 [phases.setup]
-nixPkgs = ["python311", "nodejs_20"]
-cmds = ["pip install -r requirements.txt"]
+nixPkgs = ["nodejs_20"]
+cmds = []
 
 [phases.build]
 cmds = [
