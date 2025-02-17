@@ -15,4 +15,4 @@ cmds = [
 ]
 
 [start]
-cmd = "cd frontend && npm run start"
+cmd = "cd frontend && npm start"
