@@ -1,5 +1,10 @@
 import os
+from dotenv import load_dotenv
 import dj_database_url
+
+# Загружаем переменные окружения из .env
+load_dotenv()
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = 'your-secret-key'
@@ -52,8 +57,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+# Настройки базы данных
 DATABASES = {
-    "default": dj_database_url.config(default=os.getenv("DATABASE_URL"))
+    'default': dj_database_url.config(default=os.getenv("DATABASE_PUBLIC_URL"))
 }
 
 LANGUAGE_CODE = 'ru-ru'
