@@ -2,7 +2,6 @@ import os
 from dotenv import load_dotenv
 import dj_database_url
 
-# Загружаем переменные окружения из .env
 load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -77,3 +76,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_ALL_ORIGINS = True  # Разрешает запросы со всех источников (пока для разработки)
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+CORS_ALLOWED_ORIGINS = [
+    "https://urpak.kg",
+    "https://www.urpak.kg",
+]
