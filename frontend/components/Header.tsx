@@ -1,11 +1,20 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+import { HiMenu, HiX } from "react-icons/hi";
 
 export default function Header() {
+  const [open, setOpen] = useState(false);
+
   return (
     <header className="bg-gray-800 text-white py-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center px-6">
+        {/* Logo */}
         <h1 className="text-2xl font-bold">URPAK.KG</h1>
-        <nav>
+
+        {/* Desktop navigation */}
+        <nav className="hidden md:block">
           <ul className="flex space-x-6 text-lg">
             <li>
               <Link href="/" className="hover:text-orange-400 transition">
@@ -29,7 +38,60 @@ export default function Header() {
             </li>
           </ul>
         </nav>
+
+        {/* Mobile menu button */}
+        <button
+          className="md:hidden text-2xl focus:outline-none"
+          onClick={() => setOpen(!open)}
+          aria-label="Toggle menu"
+        >
+          {open ? <HiX /> : <HiMenu />}
+        </button>
       </div>
+
+      {/* Mobile navigation */}
+      {open && (
+        <nav className="md:hidden bg-gray-800">
+          <ul className="flex flex-col px-6 py-4 space-y-4 text-lg">
+            <li>
+              <Link
+                href="/"
+                className="hover:text-orange-400 transition"
+                onClick={() => setOpen(false)}
+              >
+                Главная
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/projects"
+                className="hover:text-orange-400 transition"
+                onClick={() => setOpen(false)}
+              >
+                Новостройки
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/developers"
+                className="hover:text-orange-400 transition"
+                onClick={() => setOpen(false)}
+              >
+                Застройщики
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/contacts"
+                className="hover:text-orange-400 transition"
+                onClick={() => setOpen(false)}
+              >
+                Контакты
+              </Link>
+            </li>
+          </ul>
+        </nav>
+      )}
     </header>
-  );
+);
 }
