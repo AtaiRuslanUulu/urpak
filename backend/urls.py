@@ -8,11 +8,10 @@ router.register(r"developers", DeveloperViewSet)
 router.register(r"projects", ProjectViewSet)
 router.register(r"apartments", ApartmentViewSet)
 
-# Функция для главной страницы
 def home(request):
     return HttpResponse("<h1>Welcome to Real Estate API</h1>")
 
 urlpatterns = [
-    path("", home),  # Главная страница
+    path("", home),
     path("api/", include(router.urls)),
 ]

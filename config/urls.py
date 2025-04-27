@@ -11,7 +11,7 @@ router.register(r"projects", ProjectViewSet)
 router.register(r"apartments", ApartmentViewSet)
 
 urlpatterns = [
-    path("", home),  # Теперь главная страница красивая
+    path("", home),
     path('admin/', admin.site.urls),
     path("api/", include(router.urls)),
 ]

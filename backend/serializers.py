@@ -7,7 +7,7 @@ class DeveloperSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "logo","description", "website"]
 
 class ProjectSerializer(serializers.ModelSerializer):
-    developer = DeveloperSerializer()  # Вложенный сериализатор
+    developer = DeveloperSerializer()
 
     class Meta:
         model = Project
