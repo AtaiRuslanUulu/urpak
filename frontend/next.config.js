@@ -1,9 +1,15 @@
 /** @type {import('next').NextConfig} */
-/** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone", // Required for correct Docker deployment
+  output: 'standalone',
   images: {
-    domains: ["urpak.kg"], // Add your domain here!
+    domains: ['api.urpak.kg'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'api.urpak.kg',
+        pathname: '/media/**',
+      },
+    ],
   },
 };
 
