@@ -2,7 +2,7 @@
 const nextConfig = {
   output: 'standalone',
   images: {
-    domains: ['api.urpak.kg'],
+    domains: ["urpak.kg", "api.urpak.kg"],
     remotePatterns: [
       {
         protocol: 'https',
