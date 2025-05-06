@@ -40,54 +40,63 @@ export default function Developers() {
 
   /* ---------- UI ---------- */
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
 
-      <main className="container mx-auto py-12 px-4 grow">
-        <h1 className="text-4xl font-bold text-center mb-8">
+      <main className="w-full max-w-7xl mx-auto px-4 py-14">
+        <h1 className="text-3xl sm:text-5xl font-extrabold text-center text-slate-800 mb-12">
           Застройщики Кыргызстана
         </h1>
 
-        {/* Search */}
-        <div className="flex justify-center mb-8">
+        {/* Поиск */}
+        <div className="flex justify-center mb-10">
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="🔍 Поиск застройщика…"
-            className="w-full max-w-md px-4 py-2 border rounded-lg shadow-sm
-                       focus:outline-none focus:ring focus:border-orange-500"
+            placeholder="🔍 Искать по названию…"
+            className="w-full max-w-xl px-5 py-3 rounded-full shadow
+                       border border-slate-300
+                       focus:border-orange-500 focus:ring-orange-400/50
+                       outline-none transition"
           />
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+        {/* Сетка карточек */}
+        <div className="grid gap-8
+                        grid-cols-[repeat(auto-fill,minmax(260px,1fr))]">
           {filtered.length ? (
             filtered.map((dev) => (
-              <motion.div
+              <motion.article
                 key={dev.id}
-                whileHover={{ scale: 1.03 }}
-                className="bg-white rounded-xl shadow-md p-6 flex flex-col items-center
-                           transition hover:shadow-lg"
+                whileHover={{ y: -4, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}
+                className="bg-white rounded-2xl p-6 flex flex-col items-center"
               >
+                {/* лого */}
                 {dev.logo ? (
                   <Image
                     src={dev.logo}
                     alt={dev.name}
-                    width={120}
-                    height={120}
-                    className="rounded-full mb-4 object-cover border"
+                    width={96}
+                    height={96}
+                    className="rounded-full object-cover border border-slate-200 mb-4"
                   />
                 ) : (
-                  <div className="w-28 h-28 rounded-full bg-gray-200 mb-4 flex items-center justify-center">
-                    no logo
+                  <div className="w-24 h-24 rounded-full bg-slate-200 mb-4 flex items-center justify-center text-sm text-slate-500">
+                    no logo
                   </div>
                 )}
 
-                <h2 className="text-xl font-semibold">{dev.name}</h2>
-                <p className="text-sm text-center mt-2">
-                  {dev.description?.slice(0, 100)}…
+                {/* имя */}
+                <h2 className="text-lg font-semibold text-slate-800">
+                  {dev.name}
+                </h2>
+
+                {/* описание */}
+                <p className="text-center text-sm text-slate-600 mt-2 line-clamp-3">
+                  {dev.description}
                 </p>
 
+                {/* ссылка */}
                 {dev.website && (
                   <a
                     href={
@@ -97,16 +106,17 @@ export default function Developers() {
                     }
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-full text-sm
-                               hover:bg-orange-600"
+                    className="mt-5 px-5 py-2 rounded-full bg-orange-500
+                               text-white text-sm hover:bg-orange-600
+                               transition-colors"
                   >
                     Перейти на сайт
                   </a>
                 )}
-              </motion.div>
+              </motion.article>
             ))
           ) : (
-            <p className="col-span-full text-center text-gray-600">
+            <p className="col-span-full text-center text-lg text-slate-600">
               Застройщики не найдены
             </p>
           )}
