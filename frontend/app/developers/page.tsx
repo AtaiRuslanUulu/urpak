@@ -51,6 +51,8 @@ export default function Developers() {
             placeholder="🔍 Искать по названию…"
             className="w-full max-w-xl px-5 py-3 rounded-full shadow
                        border border-slate-300
+                       text-slate-800
+                       placeholder:text-slate-400
                        focus:border-orange-500 focus:ring-orange-400/50
                        outline-none transition"
           />
