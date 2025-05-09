@@ -6,7 +6,7 @@ class DeveloperSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Developer
-        fields = ["id", "name", "logo", "description", "website"]
+        fields = ["id", "name", "logo_url", "description", "website"]
 
     def get_logo(self, obj):
         request = self.context.get("request")

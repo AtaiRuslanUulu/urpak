@@ -10,19 +10,16 @@ interface Developer {
   name: string;
   description: string;
   website?: string;
-  logo: string;
+  logo_url?: string;
 }
 
 export default function Developers() {
   const [developers, setDevelopers] = useState<Developer[]>([]);
   const [search, setSearch] = useState("");
 
-  /** 1️⃣ Берём базовый URL из env‑переменной.
-   *    Если её нет (локальная разработка) — localhost */
   const API_BASE =
     process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
     "http://127.0.0.1:8000";
-
   const API_URL = `${API_BASE}/api/developers/`;
 
   useEffect(() => {
@@ -32,13 +29,12 @@ export default function Developers() {
       .catch((err) =>
         console.error("Ошибка загрузки застройщиков:", err.message)
       );
-  }, [API_URL]); // 2️⃣ добавили зависимость
+  }, [API_URL]);
 
   const filtered = developers.filter((d) =>
     d.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  /* ---------- UI ---------- */
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
@@ -48,7 +44,6 @@ export default function Developers() {
           Застройщики Кыргызстана
         </h1>
 
-        {/* Поиск */}
         <div className="flex justify-center mb-10">
           <input
             value={search}
@@ -61,7 +56,6 @@ export default function Developers() {
           />
         </div>
 
-        {/* Сетка карточек */}
         <div className="grid gap-8
                         grid-cols-[repeat(auto-fill,minmax(260px,1fr))]">
           {filtered.length ? (
@@ -72,9 +66,9 @@ export default function Developers() {
                 className="bg-white rounded-2xl p-6 flex flex-col items-center"
               >
                 {/* лого */}
-                {dev.logo ? (
+                {dev.logo_url ? (
                   <Image
-                    src={dev.logo}
+                    src={dev.logo_url}
                     alt={dev.name}
                     width={96}
                     height={96}
@@ -82,7 +76,7 @@ export default function Developers() {
                   />
                 ) : (
                   <div className="w-24 h-24 rounded-full bg-slate-200 mb-4 flex items-center justify-center text-sm text-slate-500">
-                    no logo
+                    no logo
                   </div>
                 )}
 
@@ -110,7 +104,7 @@ export default function Developers() {
                                text-white text-sm hover:bg-orange-600
                                transition-colors"
                   >
-                    Перейти на сайт
+                    Перейти на сайт
                   </a>
                 )}
               </motion.article>
