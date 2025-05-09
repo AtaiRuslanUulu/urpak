@@ -103,6 +103,8 @@ TEMPLATES = [
 ]
 
 # ─── CORS / CSRF ───────────────────────────────────────────────────────────────
+def _env_list(key):
+    return [v.strip() for v in os.getenv(key, '').split(',') if v.strip()]
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOWED_ORIGINS = _env_list('CORS_ALLOWED_ORIGINS')
 CORS_ALLOW_CREDENTIALS = True
