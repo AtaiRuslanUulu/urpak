@@ -13,4 +13,8 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = {
+  images: {
+    domains: ['urpak.s3.eu-central-1.amazonaws.com'],
+  },
+}
