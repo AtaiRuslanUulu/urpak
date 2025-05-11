@@ -8,7 +8,7 @@ import { HiMenu, HiX } from "react-icons/hi";
 export default function Header() {
   const [open, setOpen] = useState(false);
   const LOGO_URL =
-    process.env.NEXT_PUBLIC_LOGO_URL || "/favicon.ico"; // fallback на иконку из public/
+    process.env.NEXT_PUBLIC_LOGO_URL || "/favicon.ico";
 
   return (
     <header className="bg-gray-800 text-white py-4 shadow-md">
