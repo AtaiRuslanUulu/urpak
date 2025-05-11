@@ -4,7 +4,6 @@ import Header from "@/components/Header";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import Spinner from "@/components/Spinner";
 
 interface Developer {
   id: number;
@@ -15,7 +14,6 @@ interface Developer {
 }
 
 export default function Developers() {
-  // 1) все useState до любых return
   const [developers, setDevelopers] = useState<Developer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -31,21 +29,9 @@ export default function Developers() {
       .then(setDevelopers)
       .catch((err) => {
         console.error("Ошибка загрузки застройщиков:", err);
-        // оставляем список пустым
       })
       .finally(() => setLoading(false));
   }, [API_URL]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="container mx-auto py-12 flex justify-center">
-          <Spinner />
-        </main>
-      </div>
-    );
-  }
 
   const filtered = developers.filter((d) =>
     d.name.toLowerCase().includes(search.toLowerCase())
@@ -60,7 +46,6 @@ export default function Developers() {
           Застройщики Кыргызстана
         </h1>
 
-        {/* Поиск */}
         <div className="flex justify-center mb-10">
           <input
             value={search}
@@ -76,14 +61,21 @@ export default function Developers() {
           />
         </div>
 
-        {/* Состояние загрузки */}
-        {loading ? (
-          <p className="text-center py-8">Загрузка...</p>
-        ) : (
-          /* Сетка карточек */
-          <div className="grid gap-8 grid-cols-[repeat(auto-fill,minmax(260px,1fr))]">
-            {filtered.length ? (
-              filtered.map((dev) => (
+        <div className="grid gap-8 grid-cols-[repeat(auto-fill,minmax(260px,1fr))]">
+          {loading
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="animate-pulse bg-white rounded-2xl p-6 flex flex-col items-center"
+                >
+                  <div className="w-24 h-24 rounded-full bg-slate-200 mb-4" />
+                  <div className="w-32 h-6 bg-slate-200 rounded mb-2" />
+                  <div className="w-40 h-4 bg-slate-200 rounded mb-4" />
+                  <div className="w-20 h-8 bg-slate-200 rounded-full" />
+                </div>
+              ))
+            : filtered.length > 0
+            ? filtered.map((dev) => (
                 <motion.article
                   key={dev.id}
                   whileHover={{
@@ -92,7 +84,6 @@ export default function Developers() {
                   }}
                   className="bg-white rounded-2xl p-6 flex flex-col items-center"
                 >
-                  {/* Лого */}
                   {dev.logo_url ? (
                     <Image
                       src={dev.logo_url}
@@ -106,18 +97,12 @@ export default function Developers() {
                       no logo
                     </div>
                   )}
-
-                  {/* Имя */}
                   <h2 className="text-lg font-semibold text-slate-800">
                     {dev.name}
                   </h2>
-
-                  {/* Описание */}
                   <p className="text-center text-sm text-slate-600 mt-2 line-clamp-3">
                     {dev.description}
                   </p>
-
-                  {/* Сайт */}
                   {dev.website && (
                     <a
                       href={
@@ -134,13 +119,12 @@ export default function Developers() {
                   )}
                 </motion.article>
               ))
-            ) : (
-              <p className="col-span-full text-center text-lg text-slate-600">
-                Застройщики не найдены
-              </p>
-            )}
-          </div>
-        )}
+            : (
+                <p className="col-span-full text-center text-lg text-slate-600">
+                  Застройщики не найдены
+                </p>
+              )}
+        </div>
       </main>
     </div>
   );
