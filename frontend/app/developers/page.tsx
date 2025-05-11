@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import Spinner from "@/components/Spinner";
 
 interface Developer {
   id: number;
@@ -14,9 +15,10 @@ interface Developer {
 }
 
 export default function Developers() {
+  // 1) все useState до любых return
   const [developers, setDevelopers] = useState<Developer[]>([]);
-  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   const API_BASE =
     process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
@@ -24,16 +26,26 @@ export default function Developers() {
   const API_URL = `${API_BASE}/api/developers/`;
 
   useEffect(() => {
-    setLoading(true);
     fetch(API_URL)
-      .then((res) => res.ok ? res.json() : [])
+      .then((res) => res.json())
       .then(setDevelopers)
-      .catch(() => {
-        // просто игнорируем — оставим developers пустым
-        setDevelopers([]);
+      .catch((err) => {
+        console.error("Ошибка загрузки застройщиков:", err);
+        // оставляем список пустым
       })
       .finally(() => setLoading(false));
   }, [API_URL]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="container mx-auto py-12 flex justify-center">
+          <Spinner />
+        </main>
+      </div>
+    );
+  }
 
   const filtered = developers.filter((d) =>
     d.name.toLowerCase().includes(search.toLowerCase())
