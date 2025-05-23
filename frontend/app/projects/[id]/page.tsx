@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Header from "@/components/Header";
 import Image from "next/image";
-import { motion } from "framer-motion";
 
 interface ProjectImage {
   url: string;
