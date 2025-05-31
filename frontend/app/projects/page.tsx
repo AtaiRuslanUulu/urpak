@@ -124,7 +124,11 @@ export default function Projects() {
 
                   {/* Цена */}
                   <p className="text-slate-700 mb-4">
-                    Цена: {proj.price_per_m2.toLocaleString()} ₸/м²
+                      Цена: {proj.price_per_m2.toLocaleString("en-US", {
+                        style: "currency",
+                        currency: "USD",
+                        maximumFractionDigits: 0,
+                      })} /м²
                   </p>
 
                   {/* Кнопка */}
