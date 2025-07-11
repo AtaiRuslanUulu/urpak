@@ -2,6 +2,7 @@
 
 import Header from "@/components/Header";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
@@ -77,8 +78,7 @@ export default function Projects() {
         {/* Карточки */}
         <div className="grid gap-8 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
           {loading
-            ? // skeleton-loading
-              Array.from({ length: 6 }).map((_, i) => (
+            ? Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
                   className="animate-pulse bg-white rounded-2xl p-6 flex flex-col"
@@ -91,60 +91,56 @@ export default function Projects() {
               ))
             : filtered.length > 0
             ? filtered.map((proj) => (
-                <motion.article
+                <Link
+                  href={`/projects/${proj.id}`}
                   key={proj.id}
-                  whileHover={{
-                    y: -4,
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                  }}
-                  className="bg-white rounded-2xl p-6 flex flex-col"
+                  className="block"
                 >
-                  {/* Первое изображение */}
-                  {proj.images.length > 0 ? (
-                    <Image
+                  <motion.article
+                    whileHover={{
+                      y: -4,
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                    }}
+                    className="bg-white rounded-2xl p-6 flex flex-col cursor-pointer transition"
+                  >
+                    {proj.images.length > 0 ? (
+                      <Image
                         src={proj.images[0].url}
                         alt={proj.images[0].caption || proj.name}
                         width={400}
                         height={240}
                         className="rounded-2xl object-cover mb-4"
-                    />
-                  ) : (
-                    <div className="w-full h-40 bg-slate-200 rounded mb-4 flex items-center justify-center text-slate-500 text-sm">
+                      />
+                    ) : (
+                      <div className="w-full h-40 bg-slate-200 rounded mb-4 flex items-center justify-center text-slate-500 text-sm">
                         no image
-                    </div>
-                  )}
+                      </div>
+                    )}
 
-                  {/* Название */}
-                  <h2 className="text-xl font-semibold text-slate-800">
-                    {proj.name}
-                  </h2>
-                  <p className="text-sm text-slate-600 mb-2">
-                    Застройщик: <strong>{proj.developer.name}</strong>
-                  </p>
+                    <h2 className="text-xl font-semibold text-slate-800">
+                      {proj.name}
+                    </h2>
+                    <p className="text-sm text-slate-600 mb-2">
+                      Застройщик: <strong>{proj.developer.name}</strong>
+                    </p>
 
-                  {/* Цена */}
-                  <p className="text-slate-700 mb-4">
-                      Цена: {proj.price_per_m2.toLocaleString("en-US", {
+                    <p className="text-slate-700 mt-auto">
+                      Цена:{" "}
+                      {proj.price_per_m2.toLocaleString("en-US", {
                         style: "currency",
                         currency: "USD",
                         maximumFractionDigits: 0,
-                      })} /м²
-                  </p>
-
-                  {/* Кнопка */}
-                  <a
-                    href={`/projects/${proj.id}`}
-                    className="mt-auto inline-block text-center px-4 py-2 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors"
-                  >
-                    Подробнее
-                  </a>
-                </motion.article>
+                      })}{" "}
+                      /м²
+                    </p>
+                  </motion.article>
+                </Link>
               ))
             : (
-                <p className="col-span-full text-center text-lg text-slate-600">
-                  Проекты не найдены.
-                </p>
-              )}
+              <p className="col-span-full text-center text-lg text-slate-600">
+                Проекты не найдены.
+              </p>
+            )}
         </div>
       </main>
     </div>
