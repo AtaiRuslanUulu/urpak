@@ -37,7 +37,6 @@ interface Apartment {
   floor?: number;
   status?: string;
   apartment_number?: string;
-  is_available?: boolean;
 }
 
 export default function ApartmentDetailPage() {
@@ -47,9 +46,9 @@ export default function ApartmentDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showContactForm, setShowContactForm] = useState(false);
 
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://127.0.0.1:8000";
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://127.0.0.1:8000";
   const API_URL = `${API_BASE}/api/apartments/${id}/`;
+  const USD_TO_KGS = 85;
 
   useEffect(() => {
     fetch(API_URL)
@@ -65,12 +64,11 @@ export default function ApartmentDetailPage() {
       .finally(() => setLoading(false));
   }, [API_URL]);
 
-  const formatPrice = (price: number) =>
-    price.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    });
+  const formatPriceKGS = (price: number) =>
+    `${Math.round(price * USD_TO_KGS).toLocaleString("ru-RU")} сом`;
+
+  const formatPriceUSD = (price: number) =>
+    `$${price.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -100,30 +98,18 @@ export default function ApartmentDetailPage() {
   };
 
   // Простой калькулятор ипотеки
-  const [loanAmount, setLoanAmount] = useState(0);
-  const [downPayment, setDownPayment] = useState(0);
-  const [monthlyPayment, setMonthlyPayment] = useState(0);
-
-  useEffect(() => {
-    if (apartment) {
-      const amount = apartment.price * 0.8; // 80% кредита
-      const payment = apartment.price * 0.2; // 20% первоначальный взнос
-      const monthly = amount * 0.01; // упрощенный расчет ~1% в месяц
-
-      setLoanAmount(amount);
-      setDownPayment(payment);
-      setMonthlyPayment(monthly);
-    }
-  }, [apartment]);
+  const loanAmount = apartment ? apartment.price * 0.8 : 0; // 80% кредита
+  const downPayment = apartment ? apartment.price * 0.2 : 0; // 20% первоначальный взнос
+  const monthlyPayment = apartment ? loanAmount * 0.01 : 0; // упрощенный расчет ~1% в месяц
 
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50">
         <Header />
-        <main className="container mx-auto py-12 px-4 max-w-4xl">
+        <main className="container mx-auto py-8 px-4 max-w-4xl">
           <div className="animate-pulse">
-            <div className="h-8 bg-slate-200 rounded w-3/4 mb-6"></div>
-            <div className="bg-white rounded-2xl p-8">
+            <div className="h-6 bg-slate-200 rounded w-3/4 mb-6"></div>
+            <div className="bg-white rounded-lg p-6">
               <div className="h-64 bg-slate-200 rounded mb-6"></div>
               <div className="space-y-4">
                 <div className="h-4 bg-slate-200 rounded w-1/2"></div>
@@ -141,10 +127,9 @@ export default function ApartmentDetailPage() {
     return (
       <div className="min-h-screen bg-slate-50">
         <Header />
-        <main className="container mx-auto py-12 px-4 max-w-4xl">
+        <main className="container mx-auto py-8 px-4 max-w-4xl">
           <div className="text-center">
-            <div className="text-6xl mb-4">🏠</div>
-            <h1 className="text-2xl font-bold text-slate-800 mb-4">
+            <h1 className="text-2xl font-bold text-slate-900 mb-4">
               {error || "Квартира не найдена"}
             </h1>
             <div className="space-x-4">
@@ -156,7 +141,7 @@ export default function ApartmentDetailPage() {
               </Link>
               <button
                 onClick={() => window.location.reload()}
-                className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+                className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
               >
                 Попробовать снова
               </button>
@@ -170,7 +155,7 @@ export default function ApartmentDetailPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
-      <main className="container mx-auto py-12 px-4 max-w-4xl">
+      <main className="container mx-auto py-8 px-4 max-w-4xl">
         {/* Хлебные крошки */}
         <nav className="mb-6 text-sm text-slate-600">
           <Link href="/projects" className="hover:text-orange-500">
@@ -181,13 +166,13 @@ export default function ApartmentDetailPage() {
             {apartment.project.name}
           </Link>
           <span className="mx-2">→</span>
-          <span className="text-slate-800">
+          <span className="text-slate-900">
             Квартира {apartment.apartment_number || `#${apartment.id}`}
           </span>
         </nav>
 
         {/* Основная информация */}
-        <div className="bg-white rounded-2xl shadow-sm mb-8">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 mb-6">
           {/* Изображение проекта */}
           {apartment.project.main_image_url && (
             <div className="relative">
@@ -195,8 +180,8 @@ export default function ApartmentDetailPage() {
                 src={apartment.project.main_image_url}
                 alt={apartment.project.name}
                 width={800}
-                height={400}
-                className="w-full h-64 object-cover rounded-t-2xl"
+                height={300}
+                className="w-full h-64 md:h-80 object-cover rounded-t-lg"
               />
               <div className="absolute top-4 right-4">
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(apartment.status)}`}>
@@ -206,10 +191,10 @@ export default function ApartmentDetailPage() {
             </div>
           )}
 
-          <div className="p-8">
+          <div className="p-6 md:p-8">
             {/* Заголовок */}
             <div className="mb-6">
-              <h1 className="text-3xl font-bold text-slate-800 mb-2">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
                 {apartment.rooms}-комнатная квартира
               </h1>
               <p className="text-slate-600 text-lg">
@@ -218,62 +203,62 @@ export default function ApartmentDetailPage() {
             </div>
 
             {/* Основные характеристики */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-              <div className="text-center">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
+              <div className="text-center p-4 bg-slate-50 rounded-lg">
                 <div className="text-2xl font-bold text-orange-600 mb-1">
                   {apartment.rooms}
                 </div>
                 <div className="text-slate-600 text-sm">комнат</div>
               </div>
-              <div className="text-center">
+              <div className="text-center p-4 bg-slate-50 rounded-lg">
                 <div className="text-2xl font-bold text-orange-600 mb-1">
                   {apartment.size_m2}
                 </div>
                 <div className="text-slate-600 text-sm">м²</div>
               </div>
-              <div className="text-center">
+              <div className="text-center p-4 bg-slate-50 rounded-lg">
                 <div className="text-2xl font-bold text-orange-600 mb-1">
                   {apartment.floor || "—"}
                 </div>
                 <div className="text-slate-600 text-sm">этаж</div>
               </div>
-              <div className="text-center">
+              <div className="text-center p-4 bg-slate-50 rounded-lg">
                 <div className="text-2xl font-bold text-orange-600 mb-1">
-                  {Math.round(apartment.price / apartment.size_m2)}
+                  {Math.round(apartment.price / apartment.size_m2 * USD_TO_KGS).toLocaleString("ru-RU")}
                 </div>
-                <div className="text-slate-600 text-sm">$/м²</div>
+                <div className="text-slate-600 text-sm">сом/м²</div>
               </div>
             </div>
 
             {/* Цена */}
-            <div className="bg-orange-50 rounded-xl p-6 mb-8">
+            <div className="bg-orange-50 rounded-lg p-6 mb-8">
               <div className="text-center">
-                <div className="text-4xl font-bold text-orange-600 mb-2">
-                  {formatPrice(apartment.price)}
+                <div className="text-3xl md:text-4xl font-bold text-orange-600 mb-2">
+                  {formatPriceKGS(apartment.price)}
                 </div>
                 <div className="text-slate-600">
-                  Общая стоимость квартиры
+                  Общая стоимость • {formatPriceUSD(apartment.price)}
                 </div>
               </div>
             </div>
 
             {/* Информация о проекте */}
-            <div className="bg-slate-50 rounded-xl p-6 mb-8">
-              <h3 className="text-lg font-semibold text-slate-800 mb-4">
+            <div className="bg-slate-50 rounded-lg p-6 mb-8">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">
                 О проекте
               </h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-slate-600">Адрес:</span>
-                  <span className="text-slate-800 font-medium">{apartment.project.address}</span>
+                  <span className="text-slate-900 font-medium text-right">{apartment.project.address}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-600">Город:</span>
-                  <span className="text-slate-800 font-medium">{apartment.project.city}</span>
+                  <span className="text-slate-900 font-medium">{apartment.project.city}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-600">Срок сдачи:</span>
-                  <span className="text-slate-800 font-medium">
+                  <span className="text-slate-900 font-medium">
                     {formatDate(apartment.project.completion_date)}
                   </span>
                 </div>
@@ -289,49 +274,19 @@ export default function ApartmentDetailPage() {
               </div>
             </div>
 
-            {/* Калькулятор ипотеки */}
-            <div className="bg-blue-50 rounded-xl p-6 mb-8">
-              <h3 className="text-lg font-semibold text-slate-800 mb-4">
-                💰 Калькулятор ипотеки
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-blue-600 mb-1">
-                    {formatPrice(downPayment)}
-                  </div>
-                  <div className="text-slate-600 text-sm">Первоначальный взнос (20%)</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-blue-600 mb-1">
-                    {formatPrice(loanAmount)}
-                  </div>
-                  <div className="text-slate-600 text-sm">Сумма кредита</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-blue-600 mb-1">
-                    {formatPrice(monthlyPayment)}
-                  </div>
-                  <div className="text-slate-600 text-sm">Ежемесячный платеж*</div>
-                </div>
-              </div>
-              <div className="mt-4 text-xs text-slate-500 text-center">
-                * Приблизительный расчет. Точные условия уточняйте в банке.
-              </div>
-            </div>
-
             {/* Кнопки действий */}
             <div className="flex flex-col sm:flex-row gap-4">
               <button
                 onClick={() => setShowContactForm(true)}
-                className="flex-1 bg-orange-500 text-white py-4 px-6 rounded-xl font-semibold hover:bg-orange-600 transition-colors"
+                className="flex-1 bg-orange-500 text-white py-4 px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
               >
-                💬 Связаться с застройщиком
+                Связаться с застройщиком
               </button>
               <Link
                 href={`/projects/${apartment.project.id}`}
-                className="flex-1 bg-slate-100 text-slate-700 py-4 px-6 rounded-xl font-semibold hover:bg-slate-200 transition-colors text-center"
+                className="flex-1 bg-slate-100 text-slate-700 py-4 px-6 rounded-lg font-semibold hover:bg-slate-200 transition-colors text-center"
               >
-                🏢 Смотреть другие квартиры
+                Смотреть другие квартиры
               </Link>
             </div>
           </div>
@@ -340,8 +295,8 @@ export default function ApartmentDetailPage() {
         {/* Форма связи */}
         {showContactForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl p-8 max-w-md w-full">
-              <h3 className="text-xl font-bold text-slate-800 mb-4">
+            <div className="bg-white rounded-lg p-6 md:p-8 max-w-md w-full">
+              <h3 className="text-xl font-bold text-slate-900 mb-4">
                 Связаться с застройщиком
               </h3>
               <p className="text-slate-600 mb-6">
@@ -351,24 +306,24 @@ export default function ApartmentDetailPage() {
                 <input
                   type="text"
                   placeholder="Ваше имя"
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-400/20 outline-none"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none"
                 />
                 <input
                   type="tel"
                   placeholder="Номер телефона"
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-400/20 outline-none"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none"
                 />
                 <textarea
                   placeholder="Сообщение (необязательно)"
                   rows={3}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-400/20 outline-none resize-none"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg text-slate-900 placeholder:text-slate-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none resize-none"
                 />
                 <div className="flex gap-4">
                   <button
-                    type="submit"
+                    type="button"
                     className="flex-1 bg-orange-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
                   >
-                    Отправить
+                    Отправить заявку
                   </button>
                   <button
                     type="button"
@@ -379,6 +334,9 @@ export default function ApartmentDetailPage() {
                   </button>
                 </div>
               </form>
+              <div className="mt-4 text-xs text-slate-500 text-center">
+                Форма находится в разработке. Данные не отправляются.
+              </div>
             </div>
           </div>
         )}

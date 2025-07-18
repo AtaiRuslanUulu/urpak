@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import Header from "@/components/Header";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 
 interface ProjectImage {
   url: string;
@@ -55,6 +54,9 @@ export default function ProjectDetailPage() {
   const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://127.0.0.1:8000";
   const API_URL = `${API_BASE}/api/projects/${id}/`;
 
+  // Курс доллара к сому (можно вынести в переменную окружения)
+  const USD_TO_KGS = 87.5; // 1 USD = 85 KGS (примерно)
+
   useEffect(() => {
     fetch(API_URL)
       .then((res) => {
@@ -69,12 +71,11 @@ export default function ProjectDetailPage() {
       .finally(() => setLoading(false));
   }, [API_URL]);
 
-  const formatPrice = (price: number) =>
-    price.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    });
+  const formatPriceKGS = (price: number) =>
+    `${Math.round(price * USD_TO_KGS).toLocaleString("ru-RU")} сом`;
+
+  const formatPriceUSD = (price: number) =>
+    `$${price.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -177,9 +178,14 @@ export default function ProjectDetailPage() {
                 </div>
                 <div className="flex items-center">
                   <span className="font-medium text-slate-600 w-32">Цена за м²:</span>
-                  <span className="text-2xl font-bold text-orange-600">
-                    {formatPrice(project.price_per_m2)} /м²
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-2xl font-bold text-orange-600">
+                      {formatPriceKGS(project.price_per_m2)} /м²
+                    </span>
+                    <span className="text-sm text-slate-500">
+                      ({formatPriceUSD(project.price_per_m2)} /м²)
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -227,7 +233,7 @@ export default function ProjectDetailPage() {
                   alt={project.name}
                   width={600}
                   height={400}
-                  className="rounded-2xl object-cover w-full h-[400px] cursor-pointer"
+                  className="rounded-2xl object-cover w-full h-[400px] cursor-pointer hover:opacity-90 transition"
                   onClick={() => setSelectedImage(project.main_image_url!)}
                 />
               ) : project.images.length > 0 ? (
@@ -236,7 +242,7 @@ export default function ProjectDetailPage() {
                   alt={project.name}
                   width={600}
                   height={400}
-                  className="rounded-2xl object-cover w-full h-[400px] cursor-pointer"
+                  className="rounded-2xl object-cover w-full h-[400px] cursor-pointer hover:opacity-90 transition"
                   onClick={() => setSelectedImage(project.images[0].url)}
                 />
               ) : (
@@ -268,10 +274,9 @@ export default function ProjectDetailPage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {project.images.map((img) => (
-                <motion.div
+                <div
                   key={img.position}
-                  whileHover={{ scale: 1.05 }}
-                  className="cursor-pointer"
+                  className="cursor-pointer hover:scale-105 transition-transform"
                   onClick={() => setSelectedImage(img.url)}
                 >
                   <Image
@@ -286,7 +291,7 @@ export default function ProjectDetailPage() {
                       {img.caption}
                     </p>
                   )}
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
@@ -328,10 +333,9 @@ export default function ProjectDetailPage() {
                 </thead>
                 <tbody>
                   {project.apartments.map((apt) => (
-                    <motion.tr
+                    <tr
                       key={apt.id}
-                      whileHover={{ backgroundColor: "#f8fafc" }}
-                      className="border-b border-slate-100"
+                      className="border-b border-slate-100 hover:bg-slate-50 transition"
                     >
                       <td className="py-4 px-4">
                         <span className="font-medium text-slate-800">
@@ -348,9 +352,14 @@ export default function ProjectDetailPage() {
                         {apt.size_m2} м²
                       </td>
                       <td className="py-4 px-4">
-                        <span className="font-semibold text-slate-800">
-                          {formatPrice(apt.price)}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-800">
+                            {formatPriceKGS(apt.price)}
+                          </span>
+                          <span className="text-sm text-slate-500">
+                            ({formatPriceUSD(apt.price)})
+                          </span>
+                        </div>
                       </td>
                       <td className="py-4 px-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(apt.status)}`}>
@@ -365,7 +374,7 @@ export default function ProjectDetailPage() {
                           Подробнее →
                         </Link>
                       </td>
-                    </motion.tr>
+                    </tr>
                   ))}
                 </tbody>
               </table>
