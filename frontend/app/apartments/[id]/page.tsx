@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 
 interface Developer {
   id: number;

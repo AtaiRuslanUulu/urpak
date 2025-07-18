@@ -56,37 +56,43 @@ export default function Home() {
           </div>
         </motion.div>
 
-        {/* Секция популярных проектов */}
+        {/* Секция для застройщиков */}
         <section className="relative z-10 mt-20 max-w-6xl w-full px-4">
-          <h2 className="text-3xl font-bold text-white mb-6 text-center">
-            Популярные проекты
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {[
-              { src: "/images/panorama_park.jpg", title: "Panorama Park" },
-              { src: "/images/epos.jpg", title: "EPOS" },
-              { src: "/images/gravity.jpg", title: "Gravity" },
-            ].map((project, index) => (
-              <motion.div
-                key={index}
-                whileHover={{ scale: 1.03 }}
-                className="bg-white rounded-2xl shadow-lg overflow-hidden"
-              >
-                <Image
-                  src={project.src}
-                  alt={project.title}
-                  width={600}
-                  height={400}
-                  className="w-full h-56 object-cover"
-                />
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    {project.title}
-                  </h3>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.5 }}
+            className="bg-transparent bg-opacity-95 rounded-2xl shadow-lg p-8 md:p-12"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-slate-50 rounded-xl p-6 border-2 border-dashed border-slate-300 hover:border-slate-400 transition-colors">
+                <div className="w-full h-40 bg-slate-200 rounded-lg mb-4 flex items-center justify-center">
+                  <span className="text-slate-400 text-sm font-medium">Место для вашего проекта</span>
                 </div>
-              </motion.div>
-            ))}
-          </div>
+                <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                  Ваш проект
+                </h3>
+              </div>
+
+              <div className="bg-slate-50 rounded-xl p-6 border-2 border-dashed border-slate-300 hover:border-slate-400 transition-colors">
+                <div className="w-full h-40 bg-slate-200 rounded-lg mb-4 flex items-center justify-center">
+                  <span className="text-slate-400 text-sm font-medium">Место для вашего проекта</span>
+                </div>
+                <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                  Ваш проект
+                </h3>
+              </div>
+
+              <div className="bg-slate-50 rounded-xl p-6 border-2 border-dashed border-slate-300 hover:border-slate-400 transition-colors">
+                <div className="w-full h-40 bg-slate-200 rounded-lg mb-4 flex items-center justify-center">
+                  <span className="text-slate-400 text-sm font-medium">Место для вашего проекта</span>
+                </div>
+                <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                  Ваш проект
+                </h3>
+              </div>
+            </div>
+          </motion.div>
         </section>
       </main>
     </div>
