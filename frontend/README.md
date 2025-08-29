@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# URPAK Frontend
 
-## Getting Started
+This directory contains the Next.js frontend for the URPAK platform. It consumes the backend API so the backend must be running for most pages to function. For full project setup, including the backend, see the [root README](../README.md).
 
-First, run the development server:
+## Environment Variables
+
+Create a `.env.local` in this folder (or set variables in your deployment environment) with the following values:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+NEXT_PUBLIC_LOGO_URL=/favicon.ico
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- `NEXT_PUBLIC_API_URL` – Base URL of the backend API. All data requests are prefixed with this value (e.g. `${NEXT_PUBLIC_API_URL}/api/projects/`).
+- `NEXT_PUBLIC_LOGO_URL` – Optional URL for the logo shown in the header.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## API Integration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The frontend fetches data from the backend using the URL defined by `NEXT_PUBLIC_API_URL`. Ensure the backend server is available before running the frontend. Example endpoints include:
 
-## Learn More
+- `GET /api/projects/`
+- `GET /api/developers/`
+- `GET /api/apartments/<id>/`
 
-To learn more about Next.js, take a look at the following resources:
+## Development
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Install dependencies and start the development server:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm install
+npm run dev
+```
 
-## Deploy on Vercel
+The app will be available at [http://localhost:3000](http://localhost:3000) and automatically reloads as you edit files.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Production
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Create an optimized production build and start the server:
+
+```bash
+npm run build
+npm start
+```
+
+## Deployment
+
+A `Dockerfile` is provided for containerized deployments:
+
+```bash
+docker build -t urpak-frontend .
+docker run -p 3000:3000 --env-file .env.production urpak-frontend
+```
+
+Make sure to supply the necessary environment variables either through an env file or your hosting provider's configuration. Platforms like Vercel can also deploy this Next.js app directly.
+

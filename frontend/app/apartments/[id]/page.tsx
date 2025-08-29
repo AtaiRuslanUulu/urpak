@@ -97,10 +97,7 @@ export default function ApartmentDetailPage() {
     }
   };
 
-  // Простой калькулятор ипотеки
-  const loanAmount = apartment ? apartment.price * 0.8 : 0; // 80% кредита
-  const downPayment = apartment ? apartment.price * 0.2 : 0; // 20% первоначальный взнос
-  const monthlyPayment = apartment ? loanAmount * 0.01 : 0; // упрощенный расчет ~1% в месяц
+  // Простой калькулятор ипотеки (переменные будут добавлены в будущем)
 
   if (loading) {
     return (
