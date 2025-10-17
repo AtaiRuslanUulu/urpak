@@ -3,21 +3,137 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: 0 0% 98%;
+  --fg: 0 0% 10%;
+  --card: 0 0% 100%;
+  --muted: 0 0% 40%;
+  --border: 0 0% 90%;
+  --primary: 24 95% 55%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 200 90% 50%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 220 14% 96%;
+  --accent-foreground: 0 0% 12%;
 }
 
+/* только стартовый дефолт от системы — потом его переопределит .light/.dark */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: 0 0% 7%;
+    --fg: 0 0% 96%;
+    --card: 0 0% 10%;
+    --muted: 0 0% 70%;
+    --border: 0 0% 20%;
+    --primary: 24 95% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 199 89% 48%;
+    --secondary-foreground: 0 0% 100%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 96%;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+/* явное принуждение темы кнопкой */
+:root.light {
+  --bg: 0 0% 98%;
+  --fg: 0 0% 10%;
+  --card: 0 0% 100%;
+  --muted: 0 0% 40%;
+  --border: 0 0% 90%;
+  --primary: 24 95% 55%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 200 90% 50%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 220 14% 96%;
+  --accent-foreground: 0 0% 12%;
+}
+:root.dark {
+  --bg: 0 0% 7%;
+  --fg: 0 0% 96%;
+  --card: 0 0% 10%;
+  --muted: 0 0% 70%;
+  --border: 0 0% 20%;
+  --primary: 24 95% 60%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 199 89% 48%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 0 0% 14%;
+  --accent-foreground: 0 0% 96%;
 }
 
+@layer base {
+  html, body { height: 100%; }
+  body {
+    color: hsl(var(--fg));
+    background: hsl(var(--bg));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  ::selection { background: hsl(var(--secondary) / .25); }
+}
 
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-medium transition focus:outline-none focus:ring-2 active:scale-[0.98];
+  }
+  .btn:focus { box-shadow: 0 0 0 2px hsl(var(--secondary) / .3); }
+
+  .btn-primary { @apply btn bg-primary text-primary-foreground; }
+  .btn-primary:hover { background: hsl(var(--primary)/0.9); }
+
+  .btn-secondary { @apply btn border border-border bg-card text-fg; }
+  .btn-secondary:hover { background-color: hsl(var(--accent)); }
+
+  .input, .select {
+    @apply h-12 w-full rounded-xl border border-border bg-card px-4 text-sm text-fg placeholder:text-muted outline-none transition;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-clip: padding-box;
+    box-shadow: none;
+  }
+  .input:focus, .select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--secondary) / .3);
+  }
+  .select::-ms-expand { display: none; }
+
+  .card {
+    @apply rounded-2xl border border-border bg-card p-4 transition;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  }
+  .card:hover { box-shadow: 0 8px 30px rgba(0,0,0,.08); }
+
+  .glass {
+    @apply rounded-2xl border border-white/10;
+    background: color-mix(in oklab, hsl(var(--card)) 85%, transparent);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  }
+}
+
+@layer utilities {
+  .bg-primary { background-color: hsl(var(--primary)); }
+  .text-primary-foreground { color: hsl(var(--primary-foreground)); }
+  .bg-card { background-color: hsl(var(--card)); }
+  .text-fg { color: hsl(var(--fg)); }
+  .text-muted { color: hsl(var(--muted)); }
+  .border-border { border-color: hsl(var(--border)); }
+  .bg-accent { background-color: hsl(var(--accent)); }
+}
+
+/* декоративные пятна */
+.hero-spot-a {
+  position: absolute; inset: auto auto 0 -120px;
+  width: 520px; height: 520px; border-radius: 9999px;
+  filter: blur(48px);
+  background: radial-gradient(closest-side, hsl(var(--primary) / .18), transparent);
+  pointer-events: none;
+}
+.hero-spot-b {
+  position: absolute; inset: -60px -160px auto auto;
+  width: 520px; height: 520px; border-radius: 9999px;
+  filter: blur(48px);
+  background: radial-gradient(closest-side, hsl(var(--secondary) / .16), transparent);
+  pointer-events: none;
+}
