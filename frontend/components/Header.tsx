@@ -1,87 +1,73 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import Image from "next/image";
 import { HiMenu, HiX } from "react-icons/hi";
+import { usePathname } from "next/navigation";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
-  const LOGO_URL =
-    process.env.NEXT_PUBLIC_LOGO_URL || "/favicon.ico";
+  const pathname = usePathname();
+  const LOGO_URL = process.env.NEXT_PUBLIC_LOGO_URL || "/favicon.ico";
+
+  const NavLink = ({ href, label }: { href: string; label: string }) => {
+    const active = pathname === href;
+    return (
+      <Link
+        href={href}
+        className={`text-sm ${active ? "text-fg" : "text-muted hover:text-fg"}`}
+        onClick={() => setOpen(false)}
+      >
+        {label}
+      </Link>
+    );
+  };
 
   return (
-    <header className="bg-gray-800 text-white py-4 shadow-md">
-      <div className="container mx-auto flex justify-between items-center px-6">
-        {/* Logo + Title */}
-        <Link href="/" className="flex items-center space-x-3">
+    <header className="sticky top-0 z-40 border-b border-border bg-card/90 backdrop-blur">
+      <div className="mx-auto flex h-14 items-center justify-between px-4 md:px-6 max-w-6xl">
+        <Link href="/" className="flex items-center gap-3">
           <Image
             src={LOGO_URL}
-            alt="URPAK.KG Logo"
-            width={40}
-            height={40}
-            className="rounded-full overflow-hidden"
+            alt="URPAK.KG"
+            width={28}
+            height={28}
+            className="rounded-md"
           />
-          <span className="text-2xl font-bold">URPAK.KG</span>
+          <span className="text-base font-semibold">URPAK.KG</span>
         </Link>
 
-        {/* Desktop navigation */}
-        <nav className="hidden md:block">
-          <ul className="flex space-x-6 text-lg">
-            <li>
-              <Link href="/" className="hover:text-orange-400 transition">
-                Главная
-              </Link>
-            </li>
-            <li>
-              <Link href="/projects" className="hover:text-orange-400 transition">
-                Новостройки
-              </Link>
-            </li>
-            <li>
-              <Link href="/developers" className="hover:text-orange-400 transition">
-                Застройщики
-              </Link>
-            </li>
-            <li>
-              <Link href="/contacts" className="hover:text-orange-400 transition">
-                Контакты
-              </Link>
-            </li>
-          </ul>
+        <nav className="hidden md:flex items-center gap-6">
+          <NavLink href="/" label="Главная" />
+          <NavLink href="/projects" label="Новостройки" />
+          <NavLink href="/developers" label="Застройщики" />
+          <NavLink href="/contacts" label="Контакты" />
         </nav>
 
-        {/* Mobile menu button */}
-        <button
-          className="md:hidden text-2xl focus:outline-none"
-          onClick={() => setOpen(!open)}
-          aria-label="Toggle menu"
-        >
-          {open ? <HiX /> : <HiMenu />}
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card"
+            onClick={() => setOpen((v) => !v)}
+            aria-label="Меню"
+          >
+            {open ? <HiX size={20} /> : <HiMenu size={20} />}
+          </button>
+        </div>
       </div>
 
-      {/* Mobile navigation */}
       {open && (
-        <nav className="md:hidden bg-gray-800">
-          <ul className="flex flex-col px-6 py-4 space-y-4 text-lg">
-            {[
-              ["/", "Главная"],
-              ["/projects", "Новостройки"],
-              ["/developers", "Застройщики"],
-              ["/contacts", "Контакты"],
-            ].map(([href, label]) => (
-              <li key={href}>
-                <Link
-                  href={href}
-                  className="hover:text-orange-400 transition"
-                  onClick={() => setOpen(false)}
-                >
-                  {label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+        <nav className="md:hidden border-t border-border bg-card">
+          <div className="px-4 md:px-6 py-3 max-w-6xl mx-auto">
+            <ul className="flex flex-col gap-3">
+              <li><NavLink href="/" label="Главная" /></li>
+              <li><NavLink href="/projects" label="Новостройки" /></li>
+              <li><NavLink href="/developers" label="Застройщики" /></li>
+              <li><NavLink href="/contacts" label="Контакты" /></li>
+            </ul>
+          </div>
         </nav>
       )}
     </header>
