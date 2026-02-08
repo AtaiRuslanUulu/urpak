@@ -38,7 +38,10 @@ export default function Developers() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
-      .then((data: Developer[]) => !cancelled && setDevelopers(data))
+      .then((data) => {
+        const items: Developer[] = Array.isArray(data) ? data : data.results || [];
+        if (!cancelled) setDevelopers(items);
+      })
       .catch((err) => {
         console.error("Ошибка загрузки застройщиков:", err);
         setError("Не удалось загрузить застройщиков");

@@ -17,7 +17,7 @@ class ApartmentSerializer(serializers.ModelSerializer):
     """Сериализатор квартиры без проекта (для списка в проекте)"""
     class Meta:
         model = Apartment
-        fields = ["id", "floor", "rooms", "size_m2", "price"]
+        fields = ["id", "floor", "rooms", "size_m2", "price", "status", "apartment_number"]
 
 class ProjectSerializer(serializers.ModelSerializer):
     """Краткая информация о проекте для списков"""
@@ -28,7 +28,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         model = Project
         fields = [
             "id", "name", "developer", "city", "address",
-            "completion_date", "price_per_m2", "main_image_url", "images"
+            "completion_date", "price_per_m2", "main_image_url", "description", "images"
         ]
 
 class ProjectDetailSerializer(serializers.ModelSerializer):
@@ -41,8 +41,8 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
         model = Project
         fields = [
             "id", "name", "developer", "city", "address",
-            "completion_date", "price_per_m2", "main_image_url", 
-            "images", "apartments"
+            "completion_date", "price_per_m2", "main_image_url",
+            "description", "images", "apartments"
         ]
 
 class DeveloperDetailSerializer(serializers.ModelSerializer):
