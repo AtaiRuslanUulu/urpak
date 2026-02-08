@@ -28,10 +28,14 @@ class ProjectAdmin(admin.ModelAdmin):
         "address",
         "completion_date",
         "price_per_m2",
+        "main_image_url",
+        "description",
     )
     inlines = [ProjectImageInline]
 
 
 @admin.register(Apartment)
 class ApartmentAdmin(admin.ModelAdmin):
-    list_display = ("project", "rooms", "size_m2", "price")
+    list_display = ("project", "apartment_number", "rooms", "floor", "size_m2", "price", "status")
+    list_filter = ("status", "rooms", "project")
+    search_fields = ("apartment_number", "project__name")

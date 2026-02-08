@@ -60,8 +60,9 @@ export default function Projects() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
-      .then((data: Project[]) => {
-        if (!cancelled) setProjects(data || []);
+      .then((data) => {
+        const items: Project[] = Array.isArray(data) ? data : data.results || [];
+        if (!cancelled) setProjects(items);
       })
       .catch((err) => {
         if (!cancelled) {

@@ -61,10 +61,11 @@ export default function DeveloperDetailPage() {
         ]);
         if (!devRes.ok || !projRes.ok) throw new Error("HTTP");
         const devData: Developer = await devRes.json();
-        const projData: Project[] = await projRes.json();
+        const projRaw = await projRes.json();
+        const projData: Project[] = Array.isArray(projRaw) ? projRaw : projRaw.results || [];
         if (!cancelled) {
           setDeveloper(devData);
-          setProjects(projData || []);
+          setProjects(projData);
         }
       } catch (e) {
         if (!cancelled) setError("Не удалось загрузить информацию о застройщике");
