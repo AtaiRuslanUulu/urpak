@@ -8,9 +8,11 @@ load_dotenv()  # loads .env into os.environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY") or os.environ.get("SECRET_KEY")
-if not SECRET_KEY:
-    raise ValueError("Set DJANGO_SECRET_KEY or SECRET_KEY environment variable")
+SECRET_KEY = (
+    os.getenv("DJANGO_SECRET_KEY")
+    or os.getenv("SECRET_KEY")
+    or "django-insecure-change-me-in-production"
+)
 DEBUG = os.getenv("DJANGO_DEBUG", os.getenv("DEBUG", "False")) == "True"
 ALLOWED_HOSTS = [
     h.strip()
