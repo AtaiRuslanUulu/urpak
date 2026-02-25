@@ -21,7 +21,6 @@ ALLOWED_HOSTS = [
 ]
 
 # ─── AWS S3 (media) ─────────────────────────────────────────────────────────────
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
@@ -33,10 +32,20 @@ AWS_DEFAULT_ACL = None  # ACLs disabled on bucket; public access via bucket poli
 
 MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
 
+# Both old-style and new-style storage config for compatibility
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 # ─── Static files (CSS, JS, etc.) ───────────────────────────────────────────────
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ─── Database ─────────────────────────────────────────────────────────────────
 DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("DATABASE_PUBLIC_URL")
