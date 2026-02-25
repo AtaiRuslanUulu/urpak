@@ -9,7 +9,13 @@ class Developer(models.Model):
         max_length=500,
         blank=True,
         null=True,
-        help_text="Full https:// link to the logo image hosted in your S3 bucket."
+        help_text="URL логотипа (для старых записей)"
+    )
+    logo = models.ImageField(
+        upload_to="developers/logos/",
+        blank=True,
+        null=True,
+        help_text="Загрузить логотип (автоматически уйдёт на S3)"
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -30,7 +36,13 @@ class Project(models.Model):
     main_image_url = models.URLField(
         blank=True,
         null=True,
-        help_text="Main image URL for list view (shown on project card)."
+        help_text="URL главного фото (для старых записей)"
+    )
+    main_image = models.ImageField(
+        upload_to="projects/main/",
+        blank=True,
+        null=True,
+        help_text="Загрузить главное фото проекта"
     )
     # Добавляем описание проекта
     description = models.TextField(
@@ -48,7 +60,13 @@ class ProjectImage(models.Model):
         on_delete=models.CASCADE,
         related_name="images"
     )
-    url = models.URLField("S3 URL")
+    url = models.URLField("S3 URL", blank=True)
+    image = models.ImageField(
+        upload_to="projects/gallery/",
+        blank=True,
+        null=True,
+        help_text="Загрузить фото для галереи"
+    )
     caption = models.CharField(max_length=255, blank=True)
     position = models.PositiveSmallIntegerField(default=0)
 
