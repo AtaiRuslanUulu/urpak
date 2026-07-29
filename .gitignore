@@ -1,17 +1,13 @@
-# Node.js / Next.js
+# Frontend живёт в отдельном репозитории (urpak-frontend, деплой на Vercel)
+frontend/
 node_modules/
 .next/
-out/
-public/images/ # Ignore uploaded images (optional)
-dist/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-.vscode/
+/package.json
+/package-lock.json
 
 # Python / Django
 venv/
+.venv/
 __pycache__/
 db.sqlite3
 *.pyc
@@ -19,6 +15,7 @@ db.sqlite3
 *.pyd
 *.log
 *.swp
+staticfiles/
 
 # Env Files
 .env
@@ -31,4 +28,5 @@ docker-compose.override.yml
 
 # IDE / Editor files
 .idea/
+.vscode/
 .DS_Store
