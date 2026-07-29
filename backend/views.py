@@ -1,64 +1,109 @@
 # backend/views.py
-from django.shortcuts import render
+from django.db.models import Prefetch
 from rest_framework import viewsets, filters
+from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
+
 from .models import Developer, Project, Apartment
 from .serializers import (
     DeveloperSerializer, DeveloperDetailSerializer,
     ProjectSerializer, ProjectDetailSerializer,
-    ApartmentSerializer, ApartmentDetailSerializer
+    ApartmentSerializer, ApartmentDetailSerializer,
 )
 
-def home(request):
-    return render(request, "index.html")
 
-class DeveloperViewSet(viewsets.ModelViewSet):
-    queryset = Developer.objects.all()
+class DeveloperViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Витрина по застройщикам.
+    - Списки: показываем только одобренных застройщиков.
+    - Деталка: сам застройщик должен быть одобрен; подмешиваем ТОЛЬКО одобренные проекты (с картинками).
+    """
+    permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter]
     search_fields = ["name"]
-    
-    def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return DeveloperDetailSerializer
-        return DeveloperSerializer
-    
-    def get_queryset(self):
-        if self.action == 'retrieve':
-            # Для детальной страницы загружаем проекты
-            return Developer.objects.prefetch_related(
-                'projects__images',
-                'projects__developer'
-            )
-        return Developer.objects.all()
 
-class ProjectViewSet(viewsets.ModelViewSet):
-    queryset = Project.objects.select_related('developer').prefetch_related('images')
+    # ВАЖНО: .queryset нужен роутеру на этапе регистрации
+    queryset = Developer.objects.filter(is_approved=True)
+
+    def get_serializer_class(self):
+        return DeveloperDetailSerializer if self.action == "retrieve" else DeveloperSerializer
+
+    def get_queryset(self):
+        base = Developer.objects.filter(is_approved=True)
+
+        if self.action == "retrieve":
+            approved_projects = (
+                Project.objects.filter(is_approved=True)
+                .prefetch_related("images")
+                .select_related("developer")
+            )
+            return base.prefetch_related(
+                Prefetch("projects", queryset=approved_projects),
+            )
+
+        return base
+
+
+class ProjectViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Витрина по проектам.
+    - Списки: только одобренные проекты у одобренных застройщиков.
+    - Деталка: проект одобрен; подмешиваем его изображения и ТОЛЬКО одобренные квартиры.
+    """
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["city", "developer", "completion_date"]
     search_fields = ["name", "city", "address"]
     ordering_fields = ["price_per_m2", "completion_date"]
-    
-    def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return ProjectDetailSerializer
-        return ProjectSerializer
-    
-    def get_queryset(self):
-        if self.action == 'retrieve':
-            # Для детальной страницы загружаем все связанные данные
-            return Project.objects.select_related('developer').prefetch_related(
-                'images',
-                'apartments'
-            )
-        return Project.objects.select_related('developer').prefetch_related('images')
+    ordering = ["completion_date"]
 
-class ApartmentViewSet(viewsets.ModelViewSet):
-    queryset = Apartment.objects.select_related('project__developer')
+    # Нужен базовый queryset для роутера
+    queryset = Project.objects.filter(is_approved=True, developer__is_approved=True).select_related("developer")
+
+    def get_serializer_class(self):
+        return ProjectDetailSerializer if self.action == "retrieve" else ProjectSerializer
+
+    def get_queryset(self):
+        base = (
+            Project.objects
+            .filter(is_approved=True, developer__is_approved=True)
+            .select_related("developer")
+        )
+
+        if self.action == "retrieve":
+            approved_apartments = Apartment.objects.filter(is_approved=True)
+            return base.prefetch_related(
+                "images",
+                Prefetch("apartments", queryset=approved_apartments),
+            )
+
+        return base.prefetch_related("images")
+
+
+class ApartmentViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Витрина по квартирам.
+    - Только одобренные квартиры из одобренных проектов у одобренных застройщиков.
+    """
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ["project", "rooms", "floor", "size_m2"]
     ordering_fields = ["price", "size_m2"]
-    
+    ordering = ["price"]
+
+    # Нужен базовый queryset для роутера
+    queryset = Apartment.objects.filter(
+        is_approved=True,
+        project__is_approved=True,
+        project__developer__is_approved=True,
+    ).select_related("project", "project__developer")
+
     def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return ApartmentDetailSerializer
-        return ApartmentSerializer
+        return ApartmentDetailSerializer if self.action == "retrieve" else ApartmentSerializer
+
+    def get_queryset(self):
+        return Apartment.objects.filter(
+            is_approved=True,
+            project__is_approved=True,
+            project__developer__is_approved=True,
+        ).select_related("project", "project__developer")
