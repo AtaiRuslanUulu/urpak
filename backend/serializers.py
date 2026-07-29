@@ -12,6 +12,8 @@ from .models import Apartment, Developer, Project, ProjectImage
 
 class DeveloperSerializer(serializers.ModelSerializer):
     """Краткая информация о застройщике для списков/внутренних вложений."""
+    logo_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Developer
         fields = [
@@ -23,11 +25,23 @@ class DeveloperSerializer(serializers.ModelSerializer):
             "contact_phone",   # ← показываем телефон/WhatsApp, если указан
         ]
 
+    def get_logo_url(self, obj):
+        if obj.logo:
+            return obj.logo.url
+        return obj.logo_url or None
+
 
 class ProjectImageSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
     class Meta:
         model = ProjectImage
         fields = ["url", "caption", "position"]
+
+    def get_url(self, obj):
+        if obj.image:
+            return obj.image.url
+        return obj.url or None
 
 
 class ApartmentSerializer(serializers.ModelSerializer):
@@ -37,15 +51,7 @@ class ApartmentSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Apartment
-        fields = [
-            "id",
-            "floor",
-            "rooms",
-            "size_m2",
-            "price",
-            "status",
-            "apartment_number",
-        ]
+        fields = ["id", "floor", "rooms", "size_m2", "price", "status", "apartment_number"]
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -54,21 +60,19 @@ class ProjectSerializer(serializers.ModelSerializer):
     """
     images = ProjectImageSerializer(many=True, read_only=True)
     developer = DeveloperSerializer(read_only=True)
+    main_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Project
         fields = [
-            "id",
-            "name",
-            "developer",
-            "city",
-            "address",
-            "completion_date",
-            "price_per_m2",
-            "main_image_url",
-            "description",
-            "images",
+            "id", "name", "developer", "city", "address",
+            "completion_date", "price_per_m2", "main_image_url", "description", "images"
         ]
+
+    def get_main_image_url(self, obj):
+        if obj.main_image:
+            return obj.main_image.url
+        return obj.main_image_url or None
 
 
 class ProjectDetailSerializer(serializers.ModelSerializer):
@@ -78,22 +82,20 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
     images = ProjectImageSerializer(many=True, read_only=True)
     developer = DeveloperSerializer(read_only=True)
     apartments = ApartmentSerializer(many=True, read_only=True)
+    main_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Project
         fields = [
-            "id",
-            "name",
-            "developer",
-            "city",
-            "address",
-            "completion_date",
-            "price_per_m2",
-            "main_image_url",
-            "description",
-            "images",
-            "apartments",
+            "id", "name", "developer", "city", "address",
+            "completion_date", "price_per_m2", "main_image_url",
+            "description", "images", "apartments"
         ]
+
+    def get_main_image_url(self, obj):
+        if obj.main_image:
+            return obj.main_image.url
+        return obj.main_image_url or None
 
 
 class DeveloperDetailSerializer(serializers.ModelSerializer):
@@ -101,6 +103,7 @@ class DeveloperDetailSerializer(serializers.ModelSerializer):
     Детальная карточка застройщика со списком его проектов.
     """
     projects = ProjectSerializer(many=True, read_only=True)
+    logo_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Developer
@@ -110,9 +113,14 @@ class DeveloperDetailSerializer(serializers.ModelSerializer):
             "logo_url",
             "description",
             "website",
-            "contact_phone",   # ← добавили
+            "contact_phone",
             "projects",
         ]
+
+    def get_logo_url(self, obj):
+        if obj.logo:
+            return obj.logo.url
+        return obj.logo_url or None
 
 
 class ApartmentDetailSerializer(serializers.ModelSerializer):

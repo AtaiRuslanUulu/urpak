@@ -23,13 +23,14 @@ class DeveloperViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ["name"]
 
     # ВАЖНО: .queryset нужен роутеру на этапе регистрации
-    queryset = Developer.objects.filter(is_approved=True)
+    # order_by обязателен: без него пагинация может терять и дублировать записи
+    queryset = Developer.objects.filter(is_approved=True).order_by("name")
 
     def get_serializer_class(self):
         return DeveloperDetailSerializer if self.action == "retrieve" else DeveloperSerializer
 
     def get_queryset(self):
-        base = Developer.objects.filter(is_approved=True)
+        base = Developer.objects.filter(is_approved=True).order_by("name")
 
         if self.action == "retrieve":
             approved_projects = (
