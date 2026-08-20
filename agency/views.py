@@ -11,18 +11,27 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from .filters import ListingFilter
 from .models import (
-    Agent, Complex, Condition, Deal, District, Listing, ListingImage,
-    ListingStatus, PropertyType, Series,
+    Agent, BuildingStage, Complex, Condition, Deal, District, Document,
+    FurnitureOption, Heating, Line, Listing, ListingImage, ListingStatus,
+    PaymentCondition, PropertyType, Series, Sewerage, WallMaterial,
 )
 from .serializers import (
-    AgentSerializer, ComplexSerializer, ConditionSerializer, DealSerializer,
-    DistrictSerializer, ListingSerializer, ListingStatusSerializer,
-    ListingWriteSerializer, PropertyTypeSerializer, SeriesSerializer,
+    AgentSerializer, BuildingStageSerializer, ComplexSerializer,
+    ConditionSerializer, DealSerializer, DistrictSerializer, DocumentSerializer,
+    FurnitureOptionSerializer, HeatingSerializer, LineSerializer,
+    ListingSerializer, ListingStatusSerializer, ListingWriteSerializer,
+    PaymentConditionSerializer, PropertyTypeSerializer, SeriesSerializer,
+    SewerageSerializer, WallMaterialSerializer,
 )
 
 LISTING_RELATIONS = (
     "property_type", "district", "complex", "series", "condition", "status",
-    "curator",
+    "curator", "stage", "line", "wall_material", "heating", "sewerage",
+    "furniture",
+)
+
+LISTING_PREFETCH = (
+    "images", "documents", "payment_conditions", "curator_history__agent",
 )
 
 
@@ -47,7 +56,7 @@ class ListingViewSet(viewsets.ModelViewSet):
         base = (
             Listing.objects
             .select_related(*LISTING_RELATIONS, "curator__user")
-            .prefetch_related("images")
+            .prefetch_related(*LISTING_PREFETCH)
         )
         # `restore` и `deleted` работают с корзиной, остальное — с живыми объектами.
         if self.action in ("restore", "deleted"):
@@ -158,6 +167,14 @@ class DictionariesView(APIView):
             "complexes": items(Complex, ComplexSerializer),
             "conditions": items(Condition, ConditionSerializer),
             "statuses": items(ListingStatus, ListingStatusSerializer),
+            "stages": items(BuildingStage, BuildingStageSerializer),
+            "lines": items(Line, LineSerializer),
+            "wall_materials": items(WallMaterial, WallMaterialSerializer),
+            "heatings": items(Heating, HeatingSerializer),
+            "sewerages": items(Sewerage, SewerageSerializer),
+            "furniture_options": items(FurnitureOption, FurnitureOptionSerializer),
+            "documents": items(Document, DocumentSerializer),
+            "payment_conditions": items(PaymentCondition, PaymentConditionSerializer),
             "agents": AgentSerializer(
                 Agent.objects.filter(is_active=True), many=True
             ).data,

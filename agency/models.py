@@ -74,6 +74,75 @@ class ListingStatus(DictionaryModel):
         verbose_name_plural = "Статусы объектов"
 
 
+class BuildingStage(DictionaryModel):
+    """Этап: сдан в эксплуатацию, строится и т.д."""
+    class Meta(DictionaryModel.Meta):
+        abstract = False
+        ordering = ["position", "name"]
+        verbose_name = "Этап"
+        verbose_name_plural = "Этапы"
+
+
+class Line(DictionaryModel):
+    """Линия застройки относительно улицы."""
+    class Meta(DictionaryModel.Meta):
+        abstract = False
+        ordering = ["position", "name"]
+        verbose_name = "Линия"
+        verbose_name_plural = "Линии"
+
+
+class WallMaterial(DictionaryModel):
+    class Meta(DictionaryModel.Meta):
+        abstract = False
+        ordering = ["position", "name"]
+        verbose_name = "Материал стен"
+        verbose_name_plural = "Материалы стен"
+
+
+class Heating(DictionaryModel):
+    class Meta(DictionaryModel.Meta):
+        abstract = False
+        ordering = ["position", "name"]
+        verbose_name = "Отопление"
+        verbose_name_plural = "Виды отопления"
+
+
+class Sewerage(DictionaryModel):
+    class Meta(DictionaryModel.Meta):
+        abstract = False
+        ordering = ["position", "name"]
+        verbose_name = "Канализация"
+        verbose_name_plural = "Виды канализации"
+
+
+class FurnitureOption(DictionaryModel):
+    """Остаётся ли мебель: да / нет / частично."""
+    class Meta(DictionaryModel.Meta):
+        abstract = False
+        ordering = ["position", "name"]
+        verbose_name = "Мебель"
+        verbose_name_plural = "Варианты мебели"
+
+
+class Document(DictionaryModel):
+    """Документы на объект — у одного объекта их несколько."""
+    class Meta(DictionaryModel.Meta):
+        abstract = False
+        ordering = ["position", "name"]
+        verbose_name = "Документ"
+        verbose_name_plural = "Документы"
+
+
+class PaymentCondition(DictionaryModel):
+    """Какие условия рассматривает собственник: наличные, ипотека, обмен…"""
+    class Meta(DictionaryModel.Meta):
+        abstract = False
+        ordering = ["position", "name"]
+        verbose_name = "Условие расчёта"
+        verbose_name_plural = "Условия расчёта"
+
+
 # ─── Агенты ───────────────────────────────────────────────────────────────────
 
 class Agent(models.Model):
@@ -86,6 +155,13 @@ class Agent(models.Model):
     )
     full_name = models.CharField("ФИО", max_length=160)
     phone = models.CharField("Телефон", max_length=32, blank=True)
+    whatsapp = models.CharField(
+        "WhatsApp", max_length=32, blank=True,
+        help_text="Номер для ссылки wa.me. Пусто — берём телефон.",
+    )
+    telegram = models.CharField(
+        "Telegram", max_length=64, blank=True, help_text="Ник без @ или ссылка",
+    )
     is_active = models.BooleanField("Работает", default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -158,6 +234,38 @@ class Listing(models.Model):
         null=True, blank=True, verbose_name="Куратор",
     )
 
+    stage = models.ForeignKey(
+        BuildingStage, on_delete=models.PROTECT, related_name="listings",
+        null=True, blank=True, verbose_name="Этап",
+    )
+    line = models.ForeignKey(
+        Line, on_delete=models.PROTECT, related_name="listings",
+        null=True, blank=True, verbose_name="Линия",
+    )
+    wall_material = models.ForeignKey(
+        WallMaterial, on_delete=models.PROTECT, related_name="listings",
+        null=True, blank=True, verbose_name="Материал стен",
+    )
+    heating = models.ForeignKey(
+        Heating, on_delete=models.PROTECT, related_name="listings",
+        null=True, blank=True, verbose_name="Отопление",
+    )
+    sewerage = models.ForeignKey(
+        Sewerage, on_delete=models.PROTECT, related_name="listings",
+        null=True, blank=True, verbose_name="Канализация",
+    )
+    furniture = models.ForeignKey(
+        FurnitureOption, on_delete=models.PROTECT, related_name="listings",
+        null=True, blank=True, verbose_name="Остаётся мебель",
+    )
+    documents = models.ManyToManyField(
+        Document, related_name="listings", blank=True, verbose_name="Документы",
+    )
+    payment_conditions = models.ManyToManyField(
+        PaymentCondition, related_name="listings", blank=True,
+        verbose_name="Какие условия рассматривает",
+    )
+
     rooms = models.PositiveSmallIntegerField(
         "Комнат", null=True, blank=True, help_text="0 — студия",
     )
@@ -165,6 +273,15 @@ class Listing(models.Model):
     total_floors = models.SmallIntegerField("Этажность", null=True, blank=True)
     area_m2 = models.DecimalField("Площадь, м²", max_digits=8, decimal_places=2,
                                   null=True, blank=True)
+    built_date = models.DateField(
+        "Год постройки по техпаспорту", null=True, blank=True,
+    )
+
+    # null — «не указано»: агент не всегда знает про коммуникации сразу
+    has_gas = models.BooleanField("Газ", null=True, blank=True)
+    has_electricity = models.BooleanField("Электричество", null=True, blank=True)
+    has_water = models.BooleanField("Водоснабжение", null=True, blank=True)
+    has_topography = models.BooleanField("Топосъёмка", null=True, blank=True)
 
     price = models.DecimalField("Цена", max_digits=12, decimal_places=2)
     currency = models.CharField("Валюта", max_length=3, choices=CURRENCIES,
@@ -178,6 +295,8 @@ class Listing(models.Model):
     owner_phone = models.CharField("Телефон собственника", max_length=32, blank=True)
     address = models.CharField("Точный адрес", max_length=255, blank=True)
     internal_note = models.TextField("Внутренняя заметка", blank=True)
+    # Причина продажи — переговорный рычаг, покупателю его знать незачем
+    sale_reason = models.TextField("Причина продажи", blank=True)
 
     # Метки — вкладки в интерфейсе
     is_urgent = models.BooleanField("Срочно", default=False)
@@ -232,8 +351,51 @@ class Listing(models.Model):
         return f"{head} / {tail}" if head and tail else head or tail
 
     @property
+    def full_title(self):
+        """Развёрнутый заголовок карточки объекта, как в их CRM."""
+        parts = [
+            self.property_type.name if self.property_type_id else "",
+            self.series.name if self.series_id else "",
+        ]
+        if self.floor is not None:
+            parts.append(f"{self.floor}-этаж")
+        if self.rooms is not None:
+            parts.append("студия" if self.rooms == 0 else f"{self.rooms}-ком")
+        if self.area_m2 is not None:
+            parts.append(f"{f'{self.area_m2:.2f}'.rstrip('0').rstrip('.')} м2")
+        if self.stage_id:
+            parts.append(f"Этап - {self.stage.name}")
+        parts.append(f"{self.price:.0f}-{self.get_currency_display()}")
+        if self.district_id:
+            parts.append(self.district.name)
+        if self.line_id:
+            parts.append(self.line.name)
+        return ", ".join(part for part in parts if part)
+
+    @property
     def is_deleted(self):
         return self.deleted_at is not None
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        # Запоминаем куратора, чтобы поймать смену в save() — неважно, откуда
+        # она пришла: из формы на сайте или из админки.
+        instance._loaded_curator_id = instance.curator_id
+        return instance
+
+    def save(self, *args, **kwargs):
+        previous = getattr(self, "_loaded_curator_id", None)
+        is_new = self._state.adding
+        super().save(*args, **kwargs)
+
+        if self.curator_id and (is_new or previous != self.curator_id):
+            CuratorAssignment.objects.create(
+                listing=self,
+                agent_id=self.curator_id,
+                assigned_by=getattr(self, "_history_actor", None),
+            )
+        self._loaded_curator_id = self.curator_id
 
     def soft_delete(self, user=None):
         self.deleted_at = timezone.now()
@@ -260,6 +422,32 @@ class ListingImage(models.Model):
 
     def __str__(self):
         return f"Фото #{self.position} для ID:{self.listing_id}"
+
+
+class CuratorAssignment(models.Model):
+    """История куратора: кто и с какого момента ведёт объект."""
+
+    listing = models.ForeignKey(
+        Listing, on_delete=models.CASCADE, related_name="curator_history",
+        verbose_name="Объект",
+    )
+    agent = models.ForeignKey(
+        Agent, on_delete=models.PROTECT, related_name="assignments",
+        verbose_name="Куратор",
+    )
+    assigned_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="curator_assignments", verbose_name="Кем назначен",
+    )
+    assigned_at = models.DateTimeField("Дата назначения", auto_now_add=True)
+
+    class Meta:
+        ordering = ["-assigned_at", "-id"]
+        verbose_name = "Назначение куратора"
+        verbose_name_plural = "История кураторов"
+
+    def __str__(self):
+        return f"ID:{self.listing_id} → {self.agent}"
 
 
 # ─── Счета (комиссии по сделкам) ──────────────────────────────────────────────

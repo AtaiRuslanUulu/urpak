@@ -2,12 +2,13 @@
 from rest_framework import serializers
 
 from .models import (
-    Agent, Complex, Condition, Deal, District, Listing, ListingImage,
-    ListingStatus, PropertyType, Series,
+    Agent, BuildingStage, Complex, Condition, CuratorAssignment, Deal, District,
+    Document, FurnitureOption, Heating, Line, Listing, ListingImage,
+    ListingStatus, PaymentCondition, PropertyType, Series, Sewerage, WallMaterial,
 )
 
 # Поля, которые видит только вошедший агент.
-AGENT_ONLY_FIELDS = ("owner_phone", "address", "internal_note")
+AGENT_ONLY_FIELDS = ("owner_phone", "address", "internal_note", "sale_reason")
 
 
 def dictionary_serializer(model_cls):
@@ -22,12 +23,28 @@ SeriesSerializer = dictionary_serializer(Series)
 ComplexSerializer = dictionary_serializer(Complex)
 ConditionSerializer = dictionary_serializer(Condition)
 ListingStatusSerializer = dictionary_serializer(ListingStatus)
+BuildingStageSerializer = dictionary_serializer(BuildingStage)
+LineSerializer = dictionary_serializer(Line)
+WallMaterialSerializer = dictionary_serializer(WallMaterial)
+HeatingSerializer = dictionary_serializer(Heating)
+SewerageSerializer = dictionary_serializer(Sewerage)
+FurnitureOptionSerializer = dictionary_serializer(FurnitureOption)
+DocumentSerializer = dictionary_serializer(Document)
+PaymentConditionSerializer = dictionary_serializer(PaymentCondition)
 
 
 class AgentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Agent
-        fields = ["id", "full_name", "phone"]
+        fields = ["id", "full_name", "phone", "whatsapp", "telegram"]
+
+
+class CuratorAssignmentSerializer(serializers.ModelSerializer):
+    agent_name = serializers.CharField(source="agent.full_name", read_only=True)
+
+    class Meta:
+        model = CuratorAssignment
+        fields = ["id", "agent", "agent_name", "assigned_at"]
 
 
 class ListingImageSerializer(serializers.ModelSerializer):
@@ -51,20 +68,35 @@ class ListingSerializer(serializers.ModelSerializer):
     condition = ConditionSerializer(read_only=True)
     status = ListingStatusSerializer(read_only=True)
     curator = AgentSerializer(read_only=True)
+    stage = BuildingStageSerializer(read_only=True)
+    line = LineSerializer(read_only=True)
+    wall_material = WallMaterialSerializer(read_only=True)
+    heating = HeatingSerializer(read_only=True)
+    sewerage = SewerageSerializer(read_only=True)
+    furniture = FurnitureOptionSerializer(read_only=True)
+    documents = DocumentSerializer(many=True, read_only=True)
+    payment_conditions = PaymentConditionSerializer(many=True, read_only=True)
     images = ListingImageSerializer(many=True, read_only=True)
+    curator_history = CuratorAssignmentSerializer(many=True, read_only=True)
     title = serializers.CharField(read_only=True)
+    full_title = serializers.CharField(read_only=True)
 
     class Meta:
         model = Listing
         fields = [
-            "id", "title", "deal_type",
+            "id", "title", "full_title", "deal_type",
             "property_type", "district", "complex", "series", "condition",
             "status", "curator",
-            "rooms", "floor", "total_floors", "area_m2", "price", "currency",
+            "stage", "line", "wall_material", "heating", "sewerage", "furniture",
+            "documents", "payment_conditions",
+            "rooms", "floor", "total_floors", "area_m2", "built_date",
+            "has_gas", "has_electricity", "has_water", "has_topography",
+            "price", "currency",
             "landmark", "description",
-            "owner_phone", "address", "internal_note",
+            "owner_phone", "address", "internal_note", "sale_reason",
             "is_urgent", "is_exclusive", "is_alternative", "is_barter",
-            "images", "created_at", "updated_at", "deleted_at",
+            "images", "curator_history",
+            "created_at", "updated_at", "deleted_at",
         ]
 
     def to_representation(self, instance):
@@ -85,11 +117,43 @@ class ListingWriteSerializer(serializers.ModelSerializer):
             "deal_type",
             "property_type", "district", "complex", "series", "condition",
             "status", "curator",
-            "rooms", "floor", "total_floors", "area_m2", "price", "currency",
+            "stage", "line", "wall_material", "heating", "sewerage", "furniture",
+            "documents", "payment_conditions",
+            "rooms", "floor", "total_floors", "area_m2", "built_date",
+            "has_gas", "has_electricity", "has_water", "has_topography",
+            "price", "currency",
             "landmark", "description",
-            "owner_phone", "address", "internal_note",
+            "owner_phone", "address", "internal_note", "sale_reason",
             "is_urgent", "is_exclusive", "is_alternative", "is_barter",
         ]
+
+    M2M_FIELDS = ("documents", "payment_conditions")
+
+    def _actor(self):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        return user if (user and user.is_authenticated) else None
+
+    def _save_instance(self, instance, validated_data):
+        """Сохраняем вручную, чтобы модель успела записать историю куратора."""
+        related = {
+            field: validated_data.pop(field)
+            for field in self.M2M_FIELDS
+            if field in validated_data
+        }
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance._history_actor = self._actor()
+        instance.save()
+        for field, value in related.items():
+            getattr(instance, field).set(value)
+        return instance
+
+    def create(self, validated_data):
+        return self._save_instance(Listing(), validated_data)
+
+    def update(self, instance, validated_data):
+        return self._save_instance(instance, validated_data)
 
     def validate_price(self, value):
         if value < 0:

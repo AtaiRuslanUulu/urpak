@@ -6,7 +6,8 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from agency.models import (
-    Agent, Condition, District, Listing, ListingStatus, PropertyType, Series,
+    Agent, BuildingStage, Condition, CuratorAssignment, District, Document,
+    Listing, ListingStatus, PaymentCondition, PropertyType, Series,
 )
 
 User = get_user_model()
@@ -248,6 +249,8 @@ class DictionariesTests(AgencyApiTestCase):
         for key in (
             "property_types", "districts", "series", "complexes", "conditions",
             "statuses", "agents", "deal_types", "currencies",
+            "stages", "lines", "wall_materials", "heatings", "sewerages",
+            "furniture_options", "documents", "payment_conditions",
         ):
             self.assertIn(key, response.data)
 
@@ -268,3 +271,104 @@ class TitleTests(AgencyApiTestCase):
     def test_studio_is_labelled(self):
         self.listing.rooms = 0
         self.assertIn("студия", self.listing.title)
+
+
+class ExtendedFieldsTests(AgencyApiTestCase):
+    def test_sale_reason_is_agent_only(self):
+        self.listing.sale_reason = "Нужны денежные средства"
+        self.listing.save()
+
+        response = self.client.get(f"{LIST_URL}{self.listing.id}/")
+        self.assertNotIn("sale_reason", response.data)
+
+        self.login()
+        response = self.client.get(f"{LIST_URL}{self.listing.id}/")
+        self.assertEqual(response.data["sale_reason"], "Нужны денежные средства")
+
+    def test_communications_allow_unknown(self):
+        """Не указано — это не «нет»: агент не всегда знает про газ сразу."""
+        response = self.client.get(f"{LIST_URL}{self.listing.id}/")
+        self.assertIsNone(response.data["has_gas"])
+
+        self.login()
+        self.client.patch(f"{LIST_URL}{self.listing.id}/", {"has_gas": True})
+        self.listing.refresh_from_db()
+        self.assertTrue(self.listing.has_gas)
+
+    def test_multiselect_fields_round_trip(self):
+        red, _ = Document.objects.get_or_create(name="Красная")
+        contract, _ = Document.objects.get_or_create(name="Договор купли/продажи")
+        cash, _ = PaymentCondition.objects.get_or_create(name="Наличные")
+
+        self.login()
+        response = self.client.patch(
+            f"{LIST_URL}{self.listing.id}/",
+            {"documents": [red.id, contract.id], "payment_conditions": [cash.id]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            sorted(d["name"] for d in response.data["documents"]),
+            ["Договор купли/продажи", "Красная"],
+        )
+        self.assertEqual([c["name"] for c in response.data["payment_conditions"]], ["Наличные"])
+
+    def test_full_title_matches_their_card_heading(self):
+        self.assertEqual(
+            self.listing.full_title,
+            "Квартира, 104 серия, 3-этаж, 4-ком, 88.5 м2, 75000-$, Южный",
+        )
+
+    def test_full_title_includes_stage(self):
+        stage, _ = BuildingStage.objects.get_or_create(name="Сдан в эксплуатацию")
+        self.listing.stage = stage
+        self.assertIn("Этап - Сдан в эксплуатацию", self.listing.full_title)
+
+
+class CuratorHistoryTests(AgencyApiTestCase):
+    def test_history_starts_with_the_first_curator(self):
+        history = self.listing.curator_history.all()
+        self.assertEqual([h.agent_id for h in history], [self.agent.id])
+
+    def test_changing_curator_appends_a_record(self):
+        self.login()
+        response = self.client.patch(
+            f"{LIST_URL}{self.listing.id}/", {"curator": self.other_agent.id}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        history = list(self.listing.curator_history.order_by("id"))
+        self.assertEqual([h.agent_id for h in history], [self.agent.id, self.other_agent.id])
+        self.assertEqual(history[-1].assigned_by, self.user)
+
+    def test_unrelated_edit_does_not_touch_history(self):
+        self.login()
+        self.client.patch(f"{LIST_URL}{self.listing.id}/", {"price": "70000"})
+        self.assertEqual(self.listing.curator_history.count(), 1)
+
+    def test_soft_delete_does_not_touch_history(self):
+        self.login()
+        self.client.delete(f"{LIST_URL}{self.listing.id}/")
+        self.assertEqual(self.listing.curator_history.count(), 1)
+
+    def test_history_is_exposed_in_the_api(self):
+        response = self.client.get(f"{LIST_URL}{self.listing.id}/")
+        self.assertEqual(
+            [h["agent_name"] for h in response.data["curator_history"]],
+            ["Айбек Ибраев"],
+        )
+
+
+class AgentContactsTests(AgencyApiTestCase):
+    def test_curator_contacts_are_public(self):
+        """Клиент должен видеть, кому звонить, — это точка входа в агентство."""
+        self.agent.phone = "+996700111222"
+        self.agent.whatsapp = "996700111222"
+        self.agent.telegram = "aibek_agent"
+        self.agent.save()
+
+        response = self.client.get(f"{LIST_URL}{self.listing.id}/")
+        curator = response.data["curator"]
+        self.assertEqual(curator["phone"], "+996700111222")
+        self.assertEqual(curator["whatsapp"], "996700111222")
+        self.assertEqual(curator["telegram"], "aibek_agent")
