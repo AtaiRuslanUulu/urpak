@@ -15,6 +15,7 @@ urlpatterns = [
     path("", RedirectView.as_view(url="/admin/", permanent=False)),
     path("admin/", admin.site.urls),
     path("api/", include("backend.urls")),
+    path("api/agency/", include("agency.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     path("healthz", healthz),  # ✅ health-check endpoint
