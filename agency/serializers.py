@@ -1,11 +1,15 @@
 # agency/serializers.py
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
 from rest_framework import serializers
 
 from .models import (
-    Agent, BuildingStage, Complex, Condition, CuratorAssignment, Deal, District,
-    Document, FurnitureOption, Heating, Line, Listing, ListingImage,
-    ListingStatus, PaymentCondition, PropertyType, Series, Sewerage, WallMaterial,
+    DICTIONARY_MODELS, Agent, CuratorAssignment, Deal, Listing, ListingImage,
 )
+
+User = get_user_model()
 
 # Поля, которые видит только вошедший агент.
 AGENT_ONLY_FIELDS = ("owner_phone", "address", "internal_note", "sale_reason")
@@ -17,26 +21,157 @@ def dictionary_serializer(model_cls):
     return type(f"{model_cls.__name__}Serializer", (serializers.ModelSerializer,), {"Meta": meta})
 
 
-PropertyTypeSerializer = dictionary_serializer(PropertyType)
-DistrictSerializer = dictionary_serializer(District)
-SeriesSerializer = dictionary_serializer(Series)
-ComplexSerializer = dictionary_serializer(Complex)
-ConditionSerializer = dictionary_serializer(Condition)
-ListingStatusSerializer = dictionary_serializer(ListingStatus)
-BuildingStageSerializer = dictionary_serializer(BuildingStage)
-LineSerializer = dictionary_serializer(Line)
-WallMaterialSerializer = dictionary_serializer(WallMaterial)
-HeatingSerializer = dictionary_serializer(Heating)
-SewerageSerializer = dictionary_serializer(Sewerage)
-FurnitureOptionSerializer = dictionary_serializer(FurnitureOption)
-DocumentSerializer = dictionary_serializer(Document)
-PaymentConditionSerializer = dictionary_serializer(PaymentCondition)
+def dictionary_write_serializer(model_cls):
+    """То же самое, но с полями, которые правит руководитель."""
+    meta = type("Meta", (), {
+        "model": model_cls,
+        "fields": ["id", "name", "position", "is_active"],
+    })
+    return type(
+        f"{model_cls.__name__}WriteSerializer",
+        (serializers.ModelSerializer,),
+        {"Meta": meta},
+    )
+
+
+# Один источник правды: ключи те же, что в DICTIONARY_MODELS, поэтому новый
+# справочник достаточно добавить в модель — он сам появится в выдаче и в CRUD.
+DICTIONARY_SERIALIZERS = {
+    key: dictionary_serializer(model) for key, model in DICTIONARY_MODELS.items()
+}
+
+PropertyTypeSerializer = DICTIONARY_SERIALIZERS["property_types"]
+DistrictSerializer = DICTIONARY_SERIALIZERS["districts"]
+SeriesSerializer = DICTIONARY_SERIALIZERS["series"]
+ComplexSerializer = DICTIONARY_SERIALIZERS["complexes"]
+ConditionSerializer = DICTIONARY_SERIALIZERS["conditions"]
+ListingStatusSerializer = DICTIONARY_SERIALIZERS["statuses"]
+BuildingStageSerializer = DICTIONARY_SERIALIZERS["stages"]
+LineSerializer = DICTIONARY_SERIALIZERS["lines"]
+WallMaterialSerializer = DICTIONARY_SERIALIZERS["wall_materials"]
+HeatingSerializer = DICTIONARY_SERIALIZERS["heatings"]
+SewerageSerializer = DICTIONARY_SERIALIZERS["sewerages"]
+FurnitureOptionSerializer = DICTIONARY_SERIALIZERS["furniture_options"]
+DocumentSerializer = DICTIONARY_SERIALIZERS["documents"]
+PaymentConditionSerializer = DICTIONARY_SERIALIZERS["payment_conditions"]
 
 
 class AgentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Agent
         fields = ["id", "full_name", "phone", "whatsapp", "telegram"]
+
+
+class AgentWriteSerializer(serializers.ModelSerializer):
+    """Заводит учётку и профиль агента одним запросом."""
+
+    username = serializers.CharField(source="user.username", max_length=150)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+
+    class Meta:
+        model = Agent
+        fields = [
+            "id", "username", "password", "full_name", "phone", "whatsapp",
+            "telegram", "is_active", "is_manager",
+        ]
+
+    def validate_username(self, value):
+        value = value.strip()
+        taken = User.objects.filter(username__iexact=value)
+        if self.instance:
+            taken = taken.exclude(pk=self.instance.user_id)
+        if taken.exists():
+            raise serializers.ValidationError("Такой логин уже занят.")
+        return value
+
+    def validate_password(self, value):
+        if not value:
+            # На правке пустой пароль значит «не менять».
+            if self.instance:
+                return value
+            raise serializers.ValidationError("Задайте пароль для входа.")
+        try:
+            validate_password(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(list(exc.messages))
+        return value
+
+    def validate(self, attrs):
+        if not self.instance and not attrs.get("password"):
+            raise serializers.ValidationError({"password": "Задайте пароль для входа."})
+        return attrs
+
+    @transaction.atomic
+    def create(self, validated_data):
+        username = validated_data.pop("user")["username"]
+        password = validated_data.pop("password")
+        user = User.objects.create_user(username=username, password=password)
+        return Agent.objects.create(user=user, **validated_data)
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", None)
+        password = validated_data.pop("password", "")
+
+        if user_data and user_data.get("username"):
+            instance.user.username = user_data["username"]
+        if password:
+            instance.user.set_password(password)
+        if user_data or password:
+            instance.user.save()
+
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance.save()
+        return instance
+
+
+class AgentDetailSerializer(serializers.ModelSerializer):
+    """Чтение агента для раздела управления."""
+    username = serializers.CharField(source="user.username", read_only=True)
+    listings_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Agent
+        fields = [
+            "id", "username", "full_name", "phone", "whatsapp", "telegram",
+            "is_active", "is_manager", "listings_count",
+        ]
+
+    def get_listings_count(self, obj):
+        return obj.listings.filter(deleted_at__isnull=True).count()
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """Агент правит собственные контакты, но не роль и не доступ."""
+
+    class Meta:
+        model = Agent
+        fields = ["id", "full_name", "phone", "whatsapp", "telegram"]
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    current_password = serializers.CharField()
+    new_password = serializers.CharField()
+
+    def validate_current_password(self, value):
+        user = self.context["request"].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Текущий пароль указан неверно.")
+        return value
+
+    def validate_new_password(self, value):
+        try:
+            validate_password(value, self.context["request"].user)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(list(exc.messages))
+        return value
+
+    def save(self, **kwargs):
+        user = self.context["request"].user
+        user.set_password(self.validated_data["new_password"])
+        user.save(update_fields=["password"])
+        return user
 
 
 class CuratorAssignmentSerializer(serializers.ModelSerializer):

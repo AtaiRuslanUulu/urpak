@@ -163,6 +163,19 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
 }
 
+# ─── Пароли ───────────────────────────────────────────────────────────────────
+# Учётки агентам заводит руководитель через сайт, поэтому минимальные требования
+# к паролю нужны: иначе в базе появятся «123» и «qwerty».
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 8},
+    },
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
 # ─── Misc ─────────────────────────────────────────────────────────────────────
 LANGUAGE_CODE = "ru-ru"
 TIME_ZONE = "Asia/Bishkek"

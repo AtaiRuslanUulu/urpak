@@ -24,8 +24,11 @@ for model in (
 
 @admin.register(Agent)
 class AgentAdmin(admin.ModelAdmin):
-    list_display = ("full_name", "user", "phone", "whatsapp", "telegram", "is_active")
-    list_filter = ("is_active",)
+    list_display = (
+        "full_name", "user", "phone", "whatsapp", "telegram", "is_manager",
+        "is_active",
+    )
+    list_filter = ("is_active", "is_manager")
     search_fields = ("full_name", "phone", "user__username")
     autocomplete_fields = ("user",)
 

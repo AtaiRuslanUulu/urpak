@@ -143,6 +143,26 @@ class PaymentCondition(DictionaryModel):
         verbose_name_plural = "Условия расчёта"
 
 
+# Ключ = имя набора в /api/agency/dictionaries/. Один и тот же ключ используют
+# и выдача всех справочников разом, и CRUD конкретного справочника.
+DICTIONARY_MODELS = {
+    "property_types": PropertyType,
+    "districts": District,
+    "series": Series,
+    "complexes": Complex,
+    "conditions": Condition,
+    "statuses": ListingStatus,
+    "stages": BuildingStage,
+    "lines": Line,
+    "wall_materials": WallMaterial,
+    "heatings": Heating,
+    "sewerages": Sewerage,
+    "furniture_options": FurnitureOption,
+    "documents": Document,
+    "payment_conditions": PaymentCondition,
+}
+
+
 # ─── Агенты ───────────────────────────────────────────────────────────────────
 
 class Agent(models.Model):
@@ -163,6 +183,10 @@ class Agent(models.Model):
         "Telegram", max_length=64, blank=True, help_text="Ник без @ или ссылка",
     )
     is_active = models.BooleanField("Работает", default=True)
+    is_manager = models.BooleanField(
+        "Руководитель", default=False,
+        help_text="Может заводить агентов и править справочники",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -172,6 +196,16 @@ class Agent(models.Model):
 
     def __str__(self):
         return self.full_name or self.user.get_username()
+
+
+def is_manager(user):
+    """Суперпользователь — точка входа: он заводит первого руководителя."""
+    if not (user and user.is_authenticated):
+        return False
+    if user.is_superuser:
+        return True
+    agent = getattr(user, "agent", None)
+    return bool(agent and agent.is_active and agent.is_manager)
 
 
 # ─── Объекты ──────────────────────────────────────────────────────────────────
