@@ -129,6 +129,16 @@ class ListingWriteSerializer(serializers.ModelSerializer):
 
     M2M_FIELDS = ("documents", "payment_conditions")
 
+    def to_internal_value(self, data):
+        # multipart не умеет передать пустой список: когда агент снимает все
+        # галочки, фронт шлёт ключ с пустой строкой — разворачиваем её в [].
+        if hasattr(data, "getlist"):
+            data = data.copy()
+            for field in self.M2M_FIELDS:
+                if data.getlist(field) == [""]:
+                    data.setlist(field, [])
+        return super().to_internal_value(data)
+
     def _actor(self):
         request = self.context.get("request")
         user = getattr(request, "user", None)
